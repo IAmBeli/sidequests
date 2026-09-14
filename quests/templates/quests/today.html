@@ -1,0 +1,6 @@
+{% for assignment in assignments %}
+    <p>{{ assignment.quest.text }}</p>
+    <p>{{ assignment.deadline }}</p>
+{% empty %}
+    <p>No active quests</p>
+{% endfor %}

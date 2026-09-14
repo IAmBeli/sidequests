@@ -18,7 +18,7 @@ class Quest(models.Model):
 
     text = models.TextField()
     difficulty = models.PositiveSmallIntegerField(choices=DIFFICULTY_CHOICES)
-    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES),
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
