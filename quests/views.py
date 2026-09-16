@@ -2,28 +2,33 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from datetime import timedelta
+from django.contrib import messages
 
 from .models import Quest, Assignment
 from .ai import generate_quest
 
 @login_required
 def get_quest(request):
+    if Assignment.objects.filter(user=request.user, status="active").exists():
+        messages.info(request, "You already have an active quest.")
+        return redirect("quests:today")
+    
     if request.method == "POST":
-        result = generate_quest()
+        quest = generate_quest()
 
-        quest = Quest.objects.create(
-            text=result.text,
-            difficulty=result.difficulty,
-            category=result.category,
+        new_quest = Quest.objects.create(
+            text=quest.text,
+            difficulty=quest.difficulty,
+            category=quest.category,
         )
 
         Assignment.objects.create(
             user=request.user,
-            quest=quest,
+            quest=new_quest,
             deadline=timezone.now() + timedelta(hours=24),
         )
 
-        return redirect("today")
+        return redirect("quests:today")
 
     return render(request, "quests/get_quest.html")
 
@@ -31,3 +36,25 @@ def get_quest(request):
 def today(request):
     assignments = Assignment.objects.filter(user=request.user, status="active").select_related("quest")
     return render(request, "quests/today.html", {"assignments": assignments})
+
+@login_required
+def complete_quest(request, assignment_id):
+    assignment = get_object_or_404(Assignment, id=assignment_id, user=request.user)
+    assignment.status = "completed"
+    assignment.save()
+    messages.info(request, "Assignment marked as completed")
+    return redirect("quests:today")
+
+@login_required
+def reroll(request):
+    assignment = get_object_or_404(Assignment, user=request.user, status="active")
+
+    if assignment.rerolls_used >= 3:
+        messages.info(request, "Rerolls limit reached")
+        return redirect("quests:today")
+    
+    quest = generate_quest()
+    assignment.quest = quest
+    assignment.rerolls_used += 1
+    assignment.save()
+    return redirect("quests:today")

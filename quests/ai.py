@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 from google import genai
 from pydantic import BaseModel
+from .models import Quest
 
 load_dotenv()
 
@@ -27,6 +28,11 @@ def generate_quest():
             "schema": QuestOutput.model_json_schema()
         },
     )
-    quest = QuestOutput.model_validate_json(interaction.output_text)
-    quest.category = quest.category.lower()
+    result = QuestOutput.model_validate_json(interaction.output_text)
+    result.category = result.category.lower()
+    quest = Quest.objects.create(
+        text=result.text,
+        difficulty=result.difficulty,
+        category=result.category,
+    )
     return quest

@@ -1,6 +1,20 @@
 {% for assignment in assignments %}
     <p>{{ assignment.quest.text }}</p>
     <p>{{ assignment.deadline }}</p>
+    <form method="post" action="{% url 'quests:complete' assignment.id %}">
+        {% csrf_token %}
+        <button type="submit">Completed</button>
+    </form>
+    <form method="post" action="{% url 'quests:reroll' %}">
+        {% csrf_token %}
+        <button type="submit">Reroll</button>
+    </form>
 {% empty %}
-    <p>No active quests</p>
+    <p>No active quests yet.</p>
 {% endfor %}
+    <a href="{% url 'quests:get_quest' %}">Get quest</a>
+{% if messages %}
+    {% for message in messages %}
+        <p>{{ message }}</p>
+    {% endfor %}
+{% endif %}
