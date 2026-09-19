@@ -40,7 +40,21 @@ def today(request):
 @login_required
 def complete_quest(request, assignment_id):
     assignment = get_object_or_404(Assignment, id=assignment_id, user=request.user)
+
+    description = request.POST.get("description", "").strip()
+    if not description:
+        assignments = Assignment.objects.filter(user=request.user, status="active").select_related("quest")
+        return render(request, "quests/today.html", {
+            "assignments": assignments,
+            "error": "Please describe what you did before completing the quest.",
+            "error_assignment_id": assignment.id,
+            "entered_description": request.POST.get("description", "")
+        })
+
     assignment.status = "completed"
+    assignment.description = description
+    assignment.photo = request.FILES.get("photo")
+    assignment.completed_at = timezone.now()
     assignment.save()
     messages.info(request, "Assignment marked as completed")
     return redirect("quests:today")
