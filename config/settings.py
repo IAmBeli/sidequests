@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'quests',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -136,3 +137,6 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_TIMEZONE = TIME_ZONE
