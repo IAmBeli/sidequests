@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
 from pydantic import BaseModel
 from .models import Quest
 
@@ -36,3 +37,11 @@ def generate_quest():
         category=result.category,
     )
     return quest
+
+def get_embedding(text):
+    result = client.models.embed_content(
+        model="gemini-embedding-001",
+        contents=text,
+        config=types.EmbedContentConfig(task_type="SEMANTIC_SIMILARITY", output_dimensionality=768)
+    )
+    return result.embeddings[0].values
