@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from pgvector.django import VectorField
 
 class Quest(models.Model):
     DIFFICULTY_CHOICES = [
@@ -20,6 +21,7 @@ class Quest(models.Model):
     difficulty = models.PositiveSmallIntegerField(choices=DIFFICULTY_CHOICES)
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
+    embedding = VectorField(dimensions=768, null=True, blank=True)
 
     def __str__(self):
         return self.text[:50]
