@@ -14,7 +14,7 @@ def get_quest(request):
         return redirect("quests:today")
     
     if request.method == "POST":
-        quest = generate_quest()
+        quest = generate_quest(request.user)
 
         new_quest = Quest.objects.create(
             text=quest.text,
@@ -67,7 +67,7 @@ def reroll(request):
         messages.info(request, "Rerolls limit reached")
         return redirect("quests:today")
     
-    quest = generate_quest()
+    quest = generate_quest(request.user)
     assignment.quest = quest
     assignment.rerolls_used += 1
     assignment.save()
