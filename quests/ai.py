@@ -65,9 +65,9 @@ def is_too_similar(user, embedding):
     since = timezone.now() - timedelta(days=SIMILARITY_WINDOW_DAYS)
 
     recent_quests = Quest.objects.filter(
-        assignment__user=user,
-        assignment__taken_at__gte=since,
-        embedding__is_null=False,
+        assignments__user=user,
+        assignments__taken_at__gte=since,
+        embedding__isnull=False,
     )
 
     return recent_quests.annotate(distance=CosineDistance("embedding", embedding)).filter(distance__lt=SIMILARITY_TRESHOLD).exists()
