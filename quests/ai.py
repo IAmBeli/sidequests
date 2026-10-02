@@ -13,6 +13,13 @@ SIMILARITY_TRESHOLD = 0.15
 
 MAX_GENERATION_ATTEMPTS = 3
 
+BASE_PROMPT = (
+    "Give an easy or medium side quest for someone looking to add "
+    "variety to their day. Keep the quest text to one or two plain "
+    "sentences, no markdown formatting. Category must be exactly "
+    "one of: physical, social, creative, exploration, all lowercase."
+)
+
 load_dotenv()
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
@@ -22,16 +29,24 @@ class QuestOutput(BaseModel):
     difficulty: int
     category: str
 
+def build_prompt(recent_texts):
+    if not recent_texts:
+        return BASE_PROMPT
+    history =  "\n".join(f"- {text}" for text in recent_texts)
+    return (
+        f"{BASE_PROMPT}\n\n"
+        "The user recently recieved these quests. Suggest something "
+        "clearly different in idea and activity, not a rephrasing of "
+        f"any of them:\n{history}"
+    )
+
 def generate_quest(user):
+    recent_texts = list(get_recent_quests(user).values_list("text", flat=True))
+
     for _ in range(MAX_GENERATION_ATTEMPTS):
         interaction = client.interactions.create(
             model="gemini-3.6-flash",
-            input=(
-                "Give ease or medium side quest for someone looking to add "
-                "variety to their day. Keep the quest text to one or two plain "
-                "sentences, no markdown formatting. Category must be exactly "
-                " one of: physical, social, creative, exploration, all lowercase."
-            ),
+            input=build_prompt(recent_texts),
             response_format={
                 "type": "text",
                 "mime_type": "application/json",
@@ -44,6 +59,7 @@ def generate_quest(user):
         embedding = get_embedding(result.text)
         if not is_too_similar(user, embedding):
             break
+        recent_texts.append(result.text)
 
     return Quest.objects.create(
         text=result.text,
@@ -62,12 +78,15 @@ def get_embedding(text):
     return result.embeddings[0].values
 
 def is_too_similar(user, embedding):
-    since = timezone.now() - timedelta(days=SIMILARITY_WINDOW_DAYS)
+    return get_recent_quests(user).filter(
+        embedding__isnull=False,
+    ).annotate(
+        distance=CosineDistance("embedding", embedding)
+    ).filter(distance__lt=SIMILARITY_TRESHOLD).exists()
 
-    recent_quests = Quest.objects.filter(
+def get_recent_quests(user):
+    since = timezone.now() - timedelta(days=SIMILARITY_WINDOW_DAYS)
+    return Quest.objects.filter(
         assignments__user=user,
         assignments__taken_at__gte=since,
-        embedding__isnull=False,
     )
-
-    return recent_quests.annotate(distance=CosineDistance("embedding", embedding)).filter(distance__lt=SIMILARITY_TRESHOLD).exists()
