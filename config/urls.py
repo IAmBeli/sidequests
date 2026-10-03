@@ -18,11 +18,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from quests.views import register
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('quests/', include("quests.urls")),
     path("accounts/", include("django.contrib.auth.urls")),
+    path("accounts/register", register, name="register"),
 ]
 
 if settings.DEBUG:
