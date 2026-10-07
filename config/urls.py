@@ -19,12 +19,14 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from quests.views import register
+from django.views.generic import RedirectView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('quests/', include("quests.urls")),
     path("accounts/", include("django.contrib.auth.urls")),
     path("accounts/register", register, name="register"),
+    path("", RedirectView.as_view(pattern_name="quests:today", permanent=False)),
 ]
 
 if settings.DEBUG:
