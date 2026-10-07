@@ -1,0 +1,15 @@
+<h1>Statistics</h1>
+
+<p>Completed: {{ totals.completed }}</p>
+<p>Failed: {{ totals.failed }}</p>
+<p>Completion rate: {{ completion_rate|default:"-" }}</p>
+<p>Average rerolls: {{ totals.avg_rerolls|floatformat:1|default:"-" }}</p>
+
+<h2>Completed by category</h2>
+{% for item in by_category %}
+    <p>{{ item.quest__category }}: {{ item.count }}</p>
+{% empty %}
+    <p>No completed quests yet.</p>
+{% endfor %}
+
+<a href="{% url 'quests:today' %}">Back to today</a>

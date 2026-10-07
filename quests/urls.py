@@ -8,4 +8,5 @@ urlpatterns = [
     path("today/", views.today, name="today"),
     path("complete/<int:assignment_id>/", views.complete_quest, name="complete"),
     path("reroll/", views.reroll, name="reroll"),
+    path("stats/", views.stats, name="stats"),
 ]

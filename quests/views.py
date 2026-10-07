@@ -5,6 +5,7 @@ from datetime import timedelta
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
+from django.db.models import Avg, Count, Q
 
 from .models import Quest, Assignment
 from .ai import generate_quest
@@ -85,3 +86,29 @@ def register(request):
     else:
         form = UserCreationForm()
     return render(request, "registration/register.html", {"form": form})
+
+@login_required
+def stats(request):
+    assignments = Assignment.objects.filter(user=request.user)
+
+    totals = assignments.aggregate(
+        completed = Count("id", filter=Q(status="completed")),
+        failed = Count("id", filter=Q(status="failed")),
+        avg_rerolls = Avg("rerolls_used"),
+    )
+
+    finished = totals["completed"] + totals["failed"]
+    completion_rate = round(totals["completed"] / finished * 100) if finished else None
+
+    by_category = (
+        assignments.filter(status="completed")
+        .values("quest__category")
+        .annotate(count=Count("id"))
+        .order_by("-count")
+    )
+
+    return render(request, "quests/stats.html", {
+        "totals": totals,
+        "completion_rate": completion_rate,
+        "by_category": by_category,
+    })
