@@ -14,7 +14,7 @@ SIMILARITY_TRESHOLD = 0.15
 MAX_GENERATION_ATTEMPTS = 3
 
 BASE_PROMPT = (
-    "Give an easy or medium side quest for someone looking to add "
+    "Give {difficulty_text} side quest for someone looking to add "
     "variety to their day. Keep the quest text to one or two plain "
     "sentences, no markdown formatting. Category must be exactly "
     "one of: physical, social, creative, exploration, all lowercase."
@@ -29,9 +29,15 @@ class QuestOutput(BaseModel):
     difficulty: int
     category: str
 
-def build_prompt(recent_texts):
+def build_prompt(recent_texts, difficulty=None):
+    if difficulty is None:
+        difficulty_text = "an easy or medium"
+    else:
+        label = dict(Quest.DIFFICULTY_CHOICES)[difficulty].lower()
+        difficulty_text = f"a {label} (on a scale from very easy to very hard)"
+    prompt = BASE_PROMPT.format(difficulty_text=difficulty_text)
     if not recent_texts:
-        return BASE_PROMPT
+        return prompt
     history =  "\n".join(f"- {text}" for text in recent_texts)
     return (
         f"{BASE_PROMPT}\n\n"
@@ -40,13 +46,13 @@ def build_prompt(recent_texts):
         f"any of them:\n{history}"
     )
 
-def generate_quest(user):
+def generate_quest(user, difficulty=None):
     recent_texts = list(get_recent_quests(user).values_list("text", flat=True))
 
     for _ in range(MAX_GENERATION_ATTEMPTS):
         interaction = client.interactions.create(
             model="gemini-3.6-flash",
-            input=build_prompt(recent_texts),
+            input=build_prompt(recent_texts, difficulty),
             response_format={
                 "type": "text",
                 "mime_type": "application/json",
@@ -55,6 +61,9 @@ def generate_quest(user):
         )
         result = QuestOutput.model_validate_json(interaction.output_text)
         result.category = result.category.lower()
+
+        if difficulty is not None:
+            result.difficulty = difficulty
 
         embedding = get_embedding(result.text)
         if not is_too_similar(user, embedding):

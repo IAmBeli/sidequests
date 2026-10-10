@@ -17,7 +17,10 @@ def get_quest(request):
         return redirect("quests:today")
     
     if request.method == "POST":
-        quest = generate_quest(request.user)
+        raw = request.POST.get("difficulty", "")
+        valid = {str(value) for value, _ in Quest.DIFFICULTY_CHOICES}
+        difficulty = int(raw) if raw in valid else None
+        quest = generate_quest(request.user, difficulty)
 
         new_quest = Quest.objects.create(
             text=quest.text,
@@ -33,7 +36,7 @@ def get_quest(request):
 
         return redirect("quests:today")
 
-    return render(request, "quests/get_quest.html")
+    return render(request, "quests/get_quest.html", {"difficulty_choices": Quest.DIFFICULTY_CHOICES})
 
 @login_required
 def today(request):
