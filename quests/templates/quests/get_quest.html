@@ -1,11 +1,12 @@
 <h1>Get a side quest</h1>
-<select name="difficulty">
+</select>
+<form method="post">
+    {% csrf_token %}
+    <select name="difficulty">
     <option value="">Auto(easy or medium)</option>
     {% for value, label in difficulty_choices %}
         <option value="{{ value }}">{{ label }}</option>
     {% endfor %}
-</select>
-<form method="post">
-    {% csrf_token %}
+    </select>
     <button type="submit">Get quest</button>
 </form>
