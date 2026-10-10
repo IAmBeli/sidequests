@@ -7,6 +7,8 @@ from .models import Quest
 from datetime import timedelta
 from django.utils import timezone
 from pgvector.django import CosineDistance
+from google.genai._gaos.lib.compat_errors import APIError
+from pydantic import ValidationError
 
 SIMILARITY_WINDOW_DAYS = 7
 SIMILARITY_TRESHOLD = 0.15
@@ -23,6 +25,9 @@ BASE_PROMPT = (
 load_dotenv()
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+
+class QuestGenerationError(Exception):
+    pass
 
 class QuestOutput(BaseModel):
     text: str
@@ -49,26 +54,29 @@ def build_prompt(recent_texts, difficulty=None):
 def generate_quest(user, difficulty=None):
     recent_texts = list(get_recent_quests(user).values_list("text", flat=True))
 
-    for _ in range(MAX_GENERATION_ATTEMPTS):
-        interaction = client.interactions.create(
-            model="gemini-3.6-flash",
-            input=build_prompt(recent_texts, difficulty),
-            response_format={
-                "type": "text",
-                "mime_type": "application/json",
-                "schema": QuestOutput.model_json_schema()
-            },
-        )
-        result = QuestOutput.model_validate_json(interaction.output_text)
-        result.category = result.category.lower()
+    try:
+        for _ in range(MAX_GENERATION_ATTEMPTS):
+            interaction = client.interactions.create(
+                model="gemini-3.6-flash",
+                input=build_prompt(recent_texts, difficulty),
+                response_format={
+                    "type": "text",
+                    "mime_type": "application/json",
+                    "schema": QuestOutput.model_json_schema()
+                },
+            )
+            result = QuestOutput.model_validate_json(interaction.output_text)
+            result.category = result.category.lower()
 
-        if difficulty is not None:
-            result.difficulty = difficulty
+            if difficulty is not None:
+                result.difficulty = difficulty
 
-        embedding = get_embedding(result.text)
-        if not is_too_similar(user, embedding):
-            break
-        recent_texts.append(result.text)
+            embedding = get_embedding(result.text)
+            if not is_too_similar(user, embedding):
+                break
+            recent_texts.append(result.text)
+    except(APIError, ValidationError) as error:
+        raise QuestGenerationError("Could not generate a quest") from error
 
     return Quest.objects.create(
         text=result.text,

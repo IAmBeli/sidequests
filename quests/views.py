@@ -6,9 +6,12 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
 from django.db.models import Avg, Count, Q
+import logging
 
 from .models import Quest, Assignment
-from .ai import generate_quest
+from .ai import generate_quest, QuestGenerationError
+
+logger = logging.getLogger(__name__)
 
 @login_required
 def get_quest(request):
@@ -20,7 +23,12 @@ def get_quest(request):
         raw = request.POST.get("difficulty", "")
         valid = {str(value) for value, _ in Quest.DIFFICULTY_CHOICES}
         difficulty = int(raw) if raw in valid else None
-        quest = generate_quest(request.user, difficulty)
+        try:
+            quest = generate_quest(request.user, difficulty)
+        except QuestGenerationError:
+            logger.exception("Quest generation failed")
+            messages.error(request, "Quest generation is temporarily unavailable. Please try again later.")
+            return redirect("quests:today")
 
         new_quest = Quest.objects.create(
             text=quest.text,
@@ -73,8 +81,13 @@ def reroll(request):
         messages.info(request, "Rerolls limit reached")
         return redirect("quests:today")
     
-    quest = generate_quest(request.user)
-    assignment.quest = quest
+    try:
+        assignment.quest = generate_quest(request.user)
+    except:
+        logger.exception("Quest generation failed")
+        messages.error(request, "Quest generation is temporarily unavailable. Please try again later.")
+        return redirect("quests:today")
+    
     assignment.rerolls_used += 1
     assignment.save()
     return redirect("quests:today")
