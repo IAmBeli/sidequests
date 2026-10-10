@@ -16,12 +16,21 @@ SIMILARITY_TRESHOLD = 0.15
 MAX_GENERATION_ATTEMPTS = 3
 
 BASE_PROMPT = (
-    "Give {difficulty_text} side quest for someone looking to add "
-    "variety to their day. Keep the quest text to one or two plain "
-    "sentences, no markdown formatting. Category must be exactly "
-    "one of: physical, social, creative, exploration, all lowercase."
+    "Give a side quest for someone looking to add variety to their day. "
+    "{difficulty_text} Keep the quest text to one or two plain sentences, "
+    "no markdown formatting. Category must be exactly one of: physical, "
+    "social, creative, exploration, all lowercase."
 )
 
+DIFFICULTY_GUIDE = {
+    1: "very easy: under 10 minutes, no preparation, can be done right where you are",
+    2: "easy: around 15-30 minutes, minimal effort",
+    3: "medium: about an hour, requires leaving your usual routine",
+    4: "hard: a few hours or real physical or social effort",
+    5: "very hard: a demanding challenge taking half a day or serious effort, "
+       "like a full-body gym session, an hour-long run, or riding the metro "
+       "from one end of the city to the other",
+}
 
 load_dotenv()
 
@@ -37,24 +46,23 @@ class QuestOutput(BaseModel):
 
 def build_prompt(recent_texts, difficulty=None):
     if difficulty is None:
-        difficulty_text = "an easy or medium"
+        difficulty_text = "It should be easy or medium"
     else:
-        label = dict(Quest.DIFFICULTY_CHOICES)[difficulty].lower()
-        difficulty_text = f"a {label} (on a scale from very easy to very hard)"
+        difficulty_text = f"Difficulty: {DIFFICULTY_GUIDE[difficulty]}"
+
     prompt = BASE_PROMPT.format(difficulty_text=difficulty_text)
     if not recent_texts:
         return prompt
-    history =  "\n".join(f"- {text}" for text in recent_texts)
-    return (
-        f"{BASE_PROMPT}\n\n"
-        "The user recently recieved these quests. Suggest something "
+    history = "\n".join(f"- {text}" for text in recent_texts)
+    return(
+        f"{prompt}\n\n"
+        "The user recently received these quests. Suggest something "
         "clearly different in idea and activity, not a rephrasing of "
         f"any of them:\n{history}"
     )
 
 def generate_quest(user, difficulty=None):
     recent_texts = list(get_recent_quests(user).values_list("text", flat=True))
-
     try:
         for _ in range(MAX_GENERATION_ATTEMPTS):
             interaction = client.interactions.create(
