@@ -18,7 +18,9 @@
     </form>
     <form method="post" action="{% url 'quests:reroll' %}">
         {% csrf_token %}
+        <button type="submit" name="shift" value="easier">Easier</button>
         <button type="submit">Reroll</button>
+        <button type="submit name=shift" value="harder">Harder</button>
     </form>
 {% empty %}
     <p>No active quests yet.</p>

@@ -12,6 +12,7 @@ from .models import Quest, Assignment
 from .ai import generate_quest, QuestGenerationError
 
 logger = logging.getLogger(__name__)
+DIFFICULTY_SHIFTS = {"easier": -1, "harder": 1}
 
 @login_required
 def get_quest(request):
@@ -81,6 +82,11 @@ def reroll(request):
     if assignment.rerolls_used >= 3:
         messages.info(request, "Rerolls limit reached")
         return redirect("quests:today")
+
+    shift = DIFFICULTY_SHIFTS.get(request.POST.get("shift"))
+    if shift is not None:
+        base = assignment.requested_difficulty or assignment.quest.difficulty
+        assignment.requested_difficulty = min(max(base + shift, 1), 5)
     
     try:
         assignment.quest = generate_quest(request.user, assignment.requested_difficulty)
