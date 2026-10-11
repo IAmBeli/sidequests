@@ -40,6 +40,7 @@ def get_quest(request):
             user=request.user,
             quest=new_quest,
             deadline=timezone.now() + timedelta(hours=24),
+            requested_difficulty=difficulty,
         )
 
         return redirect("quests:today")
@@ -82,7 +83,7 @@ def reroll(request):
         return redirect("quests:today")
     
     try:
-        assignment.quest = generate_quest(request.user)
+        assignment.quest = generate_quest(request.user, assignment.requested_difficulty)
     except:
         logger.exception("Quest generation failed")
         messages.error(request, "Quest generation is temporarily unavailable. Please try again later.")

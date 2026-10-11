@@ -50,6 +50,7 @@ class Assignment(models.Model):
     description = models.TextField(blank=True)
     photo = models.ImageField(upload_to="proofs/", null=True, blank=True)
     rerolls_used = models.PositiveSmallIntegerField(default=0)
+    requested_difficulty = models.PositiveSmallIntegerField(choices=Quest.DIFFICULTY_CHOICES, null=True, blank=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.quest.text[:30]}"
