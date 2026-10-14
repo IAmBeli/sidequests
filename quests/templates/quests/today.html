@@ -2,32 +2,37 @@
 {% block title %}Today{% endblock %}
 {% block content %}
 {% for assignment in assignments %}
-    <p>{{ assignment.quest.text }}</p>
-    <p>{{ assignment.deadline }}</p>
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="mb-2">
+            <span class="badge theme-primary">{{ assignment.quest.get_category_display }}</span>
+            <span class="badge badge-outline theme-secondary">{{ assignment.quest.get_difficulty_display }}</span>
+        </div>
+        <p class="card-text fs-5">{{ assignment.quest.text }}</p>
+        <p class="text-body-secondary small">Due in {{ assignment.deadline|timeuntil }}</p>
+    
+        {% if error and assignment.id == error_assignment_id %}
+            <p class="text-danger">{{ error }}</p>
+        {% endif %}
 
-    {% if error and assignment.id == error_assignment_id %}
-        <p style="color:red">{{ error }}</p>
-    {% endif %}
+        <form method="post" enctype="multipart/form-data" action="{% url 'quests:complete' assignment.id %}" class="mb-3">
+            {% csrf_token %}
+            <textarea name="description" class="form-control mb-2" rows="3" placeholder="Describe your experience">{% if assignment.id == error_assigment_id %}{{ entered_description }}{% endif %}</textarea>
+            <input type="file" name="photo" accept="image/*" class="form-control mb-2">
+            <div class="d-flex justify-content-center">
+                <button type="submit" class="btn-solid theme-success">Completed</button>
+            </div>
+        </form>
 
-    <form method="post" enctype="multipart/form-data" action="{% url 'quests:complete' assignment.id %}">
-        {% csrf_token %}
-        <textarea name="description" placeholder="Describe your experience">{% if assignment.id == error_assignment_id %}{{ entered_description }}{% endif %}</textarea>
-        <input type="file" name="photo" accept="image/*">
-        <button type="submit">Completed</button>
-    </form>
-    <form method="post" action="{% url 'quests:reroll' %}">
-        {% csrf_token %}
-        <button type="submit" name="shift" value="easier">Easier</button>
-        <button type="submit">Reroll</button>
-        <button type="submit name=shift" value="harder">Harder</button>
-    </form>
-{% empty %}
-    <p>No active quests yet.</p>
+        <form method="post" action="{% url 'quests:reroll' %}" class="d-flex justify-content-center">
+            {% csrf_token %}
+            <div class="btn-group">
+                <button type="submit" name="shift" value="easier" class="btn btn-outline theme-secondary">Easier</button>
+                <button type="submit" class="btn btn-outline theme-secondary">Reroll</button>
+                <button type="submit" name="shift" value="harder" class="btn btn-outline theme-secondary">Harder</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endfor %}
-    <a href="{% url 'quests:get_quest' %}">Get quest</a>
-{% if messages %}
-    {% for message in messages %}
-        <p>{{ message }}</p>
-    {% endfor %}
-{% endif %}
 {% endblock %}

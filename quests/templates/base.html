@@ -18,7 +18,7 @@
                 </div>
                 <form method="post" action="{% url 'logout' %}" class="ms-auto">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-outline-secondary btn-sm">Log out</button>
+                    <button type="submit" class="btn btn-outline theme-secondary btn-sm">Log out</button>
                 </form>
                 {% endif %}
         </div>
@@ -26,7 +26,7 @@
 
     <main class="container">
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            <div class="alert theme-{{ message.tags }}">{{ message }}</div>
         {% endfor %}
         {% block content %}{% endblock %}
     </main>
