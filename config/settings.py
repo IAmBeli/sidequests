@@ -19,6 +19,8 @@ MESSAGES_TAGS = {messages_constants.ERROR: "danger"}
 
 load_dotenv()
 
+FAKE_QUEST_GENERATION = os.getenv("FAKE_QUEST_GENERATION") == "1"
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 MEDIA_URL = "/media/"

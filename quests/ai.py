@@ -9,6 +9,8 @@ from django.utils import timezone
 from pgvector.django import CosineDistance
 from google.genai._gaos.lib.compat_errors import APIError
 from pydantic import ValidationError
+import random
+from django.conf import settings
 
 SIMILARITY_WINDOW_DAYS = 7
 SIMILARITY_TRESHOLD = 0.15
@@ -32,6 +34,13 @@ DIFFICULTY_GUIDE = {
        "from one end of the city to the other",
 }
 
+FAKE_QUESTS = [
+    ("Write a short letter to your future self and seal it.", "creative"),
+    ("Visit a cafe you have never been to and try something new.", "exploration"),
+    ("Do a 20-minute stretching session.", "physical"),
+    ("Ask a classmate about a hobby you know nothing about.", "social"),
+]
+
 load_dotenv()
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
@@ -43,6 +52,20 @@ class QuestOutput(BaseModel):
     text: str
     difficulty: int
     category: str
+
+def request_quest_output(prompt):
+    if settings.FAKE_QUEST_GENERATION:
+        text, category = random.choice(FAKE_QUESTS)
+        return QuestOutput(text=text, difficulty=3, category=category)
+
+    interaction = client.interactions.create(
+        model="gemini-3.6-flash",
+        input=prompt,
+        response_format={"type": "text",
+                            "mime_type": "application/json",
+                            "schema": QuestOutput.model_json_schema()},
+    )
+    return QuestOutput.model_validate_json(interaction.output_text)
 
 def build_prompt(recent_texts, difficulty=None):
     if difficulty is None:
@@ -65,16 +88,7 @@ def generate_quest(user, difficulty=None):
     recent_texts = list(get_recent_quests(user).values_list("text", flat=True))
     try:
         for _ in range(MAX_GENERATION_ATTEMPTS):
-            interaction = client.interactions.create(
-                model="gemini-3.6-flash",
-                input=build_prompt(recent_texts, difficulty),
-                response_format={
-                    "type": "text",
-                    "mime_type": "application/json",
-                    "schema": QuestOutput.model_json_schema()
-                },
-            )
-            result = QuestOutput.model_validate_json(interaction.output_text)
+            result = request_quest_output(build_prompt(recent_texts, difficulty))
             result.category = result.category.lower()
 
             if difficulty is not None:
