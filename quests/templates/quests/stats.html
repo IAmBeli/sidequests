@@ -1,17 +1,44 @@
 {% extends "base.html" %}
 {% block title %}Stats{% endblock %}
 {% block content %}
-<h1>Statistics</h1>
+<h1 class="mb-4">Statistics</h1>
 
-<p>Completed: {{ totals.completed }}</p>
-<p>Failed: {{ totals.failed }}</p>
-<p>Completion rate: {{ completion_rate|default:"-" }}</p>
-<p>Average rerolls: {{ totals.avg_rerolls|floatformat:1|default:"-" }}</p>
+<div class="row g-3 mb-4">
+    <div class="col">
+        <div class="card"><div class="card-body text-center">
+            <div class="fs-2">{{ totals.completed }}</div>
+            <div>Completed</div>
+        </div></div>
+    </div>
+    <div class="col">
+        <div class="card"><div class="card-body text-center">
+            <div class="fs-2">{{ totals.failed }}</div>
+            <div>Failed</div>
+        </div></div>
+    </div>
+    <div class="col">
+        <div class="card"><div class="card-body text-center">
+            <div class="fs-2">{{ completion_rate|default:"-" }}%</div>
+            <div>Completion rate</div>
+        </div></div>
+    </div>
+    <div class="cole">
+        <div class="card"><div class="card-body text-center">
+            <div class="fs-2">{{ totals.avg_rerolls|floatformat:1|default:"-" }}</div>
+            <div>Average rerolls</div>
+        </div></div>
+    </div>
+</div>
 
-<h2>Completed by category</h2>
-{% for item in by_category %}
-    <p>{{ item.quest__category }}: {{ item.count }}</p>
-{% empty %}
-    <p>No completed quests yet.</p>
-{% endfor %}
+<h2 class="h4 mb-3">Completed by category</h2>
+<ul class="list-group">
+    {% for item in by_category %}
+        <li class="list-group-item d-flex justify-content-between">
+            <span>{{ item.quest__category|capfirst }}</span>
+            <span class="badge theme-primary">{{ item.count }}</span>
+        </li>
+    {% empty %}
+        <li class="list-group-item">No completed quests yet.</li>
+    {% endfor %}
+</ul>
 {% endblock %}
