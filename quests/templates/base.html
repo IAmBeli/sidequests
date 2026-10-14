@@ -26,7 +26,7 @@
 
     <main class="container">
         {% for message in messages %}
-            <div class="alert theme-{{ message.tags }}">{{ message }}</div>
+            <div class="alert theme-{{ message.tags }}" role="alert">{{ message }}</div>
         {% endfor %}
         {% block content %}{% endblock %}
     </main>
