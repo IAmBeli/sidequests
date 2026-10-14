@@ -1,7 +1,6 @@
-<form method="post" action="{% url 'logout' %}">
-    {% csrf_token %}
-    <button type="submit">Log out</button>
-</form>
+{% extends "base.html" %}
+{% block title %}Today{% endblock %}
+{% block content %}
 {% for assignment in assignments %}
     <p>{{ assignment.quest.text }}</p>
     <p>{{ assignment.deadline }}</p>
@@ -31,4 +30,4 @@
         <p>{{ message }}</p>
     {% endfor %}
 {% endif %}
-<a href="{% url 'quests:stats' %}">Statistics</a>
+{% endblock %}

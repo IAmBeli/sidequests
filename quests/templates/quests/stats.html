@@ -1,3 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Stats{% endblock %}
+{% block content %}
 <h1>Statistics</h1>
 
 <p>Completed: {{ totals.completed }}</p>
@@ -11,5 +14,4 @@
 {% empty %}
     <p>No completed quests yet.</p>
 {% endfor %}
-
-<a href="{% url 'quests:today' %}">Back to today</a>
+{% endblock %}
