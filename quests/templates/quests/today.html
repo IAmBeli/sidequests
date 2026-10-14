@@ -34,5 +34,15 @@
         </form>
     </div>
 </div>
+{% empty %}
+    <div class="card mx-auto text-center" style="max-width: 400px">
+        <div class="card-body p-5">
+            <h2 class="h4 mb-2">No active quests</h2>
+            <p class="mb-4">Pick a difficulty and get something new to do today.</p>
+            <div class="d-flex justify-content-center">
+                <a href="{% url 'quests:get_quest' %}" class="btn-solid theme-primary">Get a quest</a>
+            </div>
+        </div>
+    </div>
 {% endfor %}
 {% endblock %}
