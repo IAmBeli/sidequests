@@ -21,6 +21,7 @@ The stats page shows how many quests you completed and failed, your completion r
 - Gemini API through the `google-genai` SDK, with structured output validated by pydantic; `gemini-embedding-001` for 768-dimensional embeddings
 - Celery with Redis as the broker, and `django-celery-beat` for the periodic task that expires overdue quests
 - Django's built-in authentication views for login, logout and registration
+- Bootstrap 6 for the interface, with Django template inheritance for the shared layout
 
 ## Project structure
 
@@ -83,3 +84,4 @@ Finally, open the admin, go to Periodic tasks and add a task for `quests.tasks.e
 ## A note on API limits
 
 The free Gemini tier allows very few requests per day for the text model, and a single quest can take up to three generation calls if the first attempts turn out too similar to recent ones. If you hit the limit, the app shows a message asking you to try again later instead of failing, and the full error is logged in the server console.
+For development there is also a fake generation mode. Set `FAKE_QUEST_GENERATION=1` in `.env` and the app picks quests from a small built-in list instead of calling the text model, so you can work on the interface, rerolls and stats without spending the daily quota. Embeddings still come from Gemini, since their quota is much larger.
